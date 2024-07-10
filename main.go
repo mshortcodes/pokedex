@@ -1,19 +1,17 @@
 package main
 
-import (
-	"fmt"
-	"log"
+import "github.com/mshortcodes/pokedex/internal/pokeapi"
 
-	"github.com/mshortcodes/pokedex/internal/pokeapi"
-)
+type config struct {
+	pokeapiClient       pokeapi.Client
+	nextLocationURL     *string
+	previousLocationURL *string
+}
 
 func main() {
-	pokeapiClient := pokeapi.NewClient()
-
-	resp, err := pokeapiClient.ListLocationAreas()
-	if err != nil {
-		log.Fatal(err)
+	cfg := &config{
+		pokeapiClient: pokeapi.NewClient(),
 	}
-	fmt.Println(resp)
-	// startRepl()
+
+	startRepl(cfg)
 }
