@@ -6,15 +6,11 @@ import (
 	"github.com/mshortcodes/pokedex/internal/pokeapi"
 )
 
-type config struct {
-	pokeapiClient       pokeapi.Client
-	nextLocationURL     *string
-	previousLocationURL *string
-}
-
 func main() {
+	pokeClient := pokeapi.NewClient(5*time.Second, 5*time.Minute)
 	cfg := &config{
-		pokeapiClient: pokeapi.NewClient(time.Hour),
+		pokeapiClient: pokeClient,
+		caughtPokemon: map[string]pokeapi.Pokemon{},
 	}
 
 	startRepl(cfg)

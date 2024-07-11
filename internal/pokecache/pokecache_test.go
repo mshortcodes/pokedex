@@ -1,81 +1,61 @@
 package pokecache
 
 import (
+	"fmt"
 	"testing"
 	"time"
 )
 
-func TestCreateCache(t *testing.T) {
-	cache := NewCache(time.Millisecond)
-	if cache.cache == nil {
-		t.Error("cache is nil")
-	}
-}
-
-func TestAddGetCache(t *testing.T) {
-	cache := NewCache(time.Millisecond)
-
+func TestAddGet(t *testing.T) {
+	const interval = 5 * time.Second
 	cases := []struct {
-		inputKey string
-		inputVal []byte
+		key string
+		val []byte
 	}{
 		{
-			inputKey: "key1",
-			inputVal: []byte("val1"),
+			key: "https://example.com",
+			val: []byte("testdata"),
 		},
 		{
-			inputKey: "key2",
-			inputVal: []byte("val2"),
-		},
-		{
-			inputKey: "",
-			inputVal: []byte("val3"),
+			key: "https://example.com/path",
+			val: []byte("moretestdata"),
 		},
 	}
 
-	for _, testCase := range cases {
-		cache.Add(testCase.inputKey, testCase.inputVal)
-		actual, ok := cache.Get(testCase.inputKey)
-		if !ok {
-			t.Errorf("%s not found", testCase.inputKey)
-			continue
-		}
-		if string(actual) != string(testCase.inputVal) {
-			t.Errorf("%s doesn't match %s",
-				string(actual),
-				string(testCase.inputVal))
-			continue
-		}
-	}
-
-}
-
-func TestReap(t *testing.T) {
-	interval := time.Millisecond * 10
-	cache := NewCache(interval)
-
-	keyOne := "key1"
-	cache.Add(keyOne, []byte("val1"))
-
-	time.Sleep(interval + time.Millisecond)
-
-	_, ok := cache.Get(keyOne)
-	if ok {
-		t.Errorf("%s should have been reaped", keyOne)
+	for i, c := range cases {
+		t.Run(fmt.Sprintf("Test case %v", i), func(t *testing.T) {
+			cache := NewCache(interval)
+			cache.Add(c.key, c.val)
+			val, ok := cache.Get(c.key)
+			if !ok {
+				t.Errorf("expected to find key")
+				return
+			}
+			if string(val) != string(c.val) {
+				t.Errorf("expected to find value")
+				return
+			}
+		})
 	}
 }
 
-func TestReapFail(t *testing.T) {
-	interval := time.Millisecond * 10
-	cache := NewCache(interval)
+func TestReapLoop(t *testing.T) {
+	const baseTime = 5 * time.Millisecond
+	const waitTime = baseTime + 5*time.Millisecond
+	cache := NewCache(baseTime)
+	cache.Add("https://example.com", []byte("testdata"))
 
-	keyOne := "key1"
-	cache.Add(keyOne, []byte("val1"))
-
-	time.Sleep(interval / 2)
-
-	_, ok := cache.Get(keyOne)
+	_, ok := cache.Get("https://example.com")
 	if !ok {
-		t.Errorf("%s should not have been reaped", keyOne)
+		t.Errorf("expected to find key")
+		return
+	}
+
+	time.Sleep(waitTime)
+
+	_, ok = cache.Get("https://example.com")
+	if ok {
+		t.Errorf("expected to not find key")
+		return
 	}
 }
